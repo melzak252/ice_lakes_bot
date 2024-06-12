@@ -48,10 +48,21 @@ class IceLakesBot:
         pyautogui.click()
     
     def loop(self, start):
+        self.pause = True
         t = 0 
         while t < self.max_time:
+            if self.pause:
+                processed_img = self.img_menager.get_screen()
+                                
+                cv2.imshow("window", processed_img)
 
-            pyautogui.moveTo(self.move_x(t), self.move_y(t))
+                if cv2.waitKey(25) & 0xFF == ord("q"):
+                    cv2.destroyAllWindows()
+                    break                
+                
+                continue
+                
+            pyautogui.mouseDown(self.move_x(t), self.move_y(t))
 
             if round(t) % 30 == 0:
                 pyautogui.press("r")
@@ -67,13 +78,13 @@ class IceLakesBot:
 
             if round(t) % 150 == 0 and isline and self.save_img:
                 self.img_menager.write_img(processed_img, isfish=False)
-                
-            # cv2.imshow("window", processed_img)
+        
+            cv2.imshow("window", processed_img)
 
-            # if cv2.waitKey(25) & 0xFF == ord("q"):
-            #     cv2.destroyAllWindows()
-            #     break
-            
+            if cv2.waitKey(25) & 0xFF == ord("q"):
+                cv2.destroyAllWindows()
+                break
+        
             self.line_in_last_loop = isline
             t = time.time() - start
     
@@ -82,6 +93,12 @@ class IceLakesBot:
     
     def move_y(self, t):
         return self.center_y 
+    
+    def skip(self) -> None:
+        self.pause = True
+    
+    def cont(self) -> None:
+        self.pause = False
     
     def got_fish(self):
         self.counter += 1
@@ -106,7 +123,7 @@ class IceLakesBot:
             time.sleep(5)
         
         time.sleep(1)
-        pyautogui.click(self.center_x, self.center_y)
+        pyautogui.mouseDown(self.center_x, self.center_y)
         self.line_in_last_loop = True
         print("Start Fishing Again")
 

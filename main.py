@@ -1,6 +1,8 @@
 import argparse
 import time
 
+import keyboard
+
 from bot.icelakes_bot import IceLakesBot
 
 parser = argparse.ArgumentParser()
@@ -29,9 +31,24 @@ TIME = float(args.time) * 60
 
 PIXELS = int(args.pixels)
 
+print("Preparing bot...")
+bot = IceLakesBot(TIME, PIXELS, SAVE_IMG)
+
+
+def stop_bot():
+    global bot
+    
+    bot.skip()
+
+def start_bot():
+    global bot
+    bot.cont()
+
+keyboard.add_hotkey("X", stop_bot)
+keyboard.add_hotkey("Z", start_bot)
+
+
 def main():
-    print("Preparing bot...")
-    bot = IceLakesBot(TIME, PIXELS, SAVE_IMG)
 
     print("Starting... ", end="")
     time.sleep(1.)

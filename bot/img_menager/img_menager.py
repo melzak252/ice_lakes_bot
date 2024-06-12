@@ -11,8 +11,13 @@ class ImgMenager:
     def __init__(self) -> None:
         self.vertices = np.array([[0, 0] , [450, 0], [580, 250], [580, 600], [150, 600], [0, 400]])
         self.working_dir = os.getcwd()    
-    def check_rod(self):
+    
+    def get_screen(self):
         screen = np.array(ImageGrab.grab(bbox=(700, 150, 1280, 750)))
+        return screen
+    
+    def check_rod(self):
+        screen = self.get_screen()
         processed_img, isline = self.procces_img(screen)
         return screen, processed_img, isline 
 
@@ -21,15 +26,14 @@ class ImgMenager:
         processed_img = cv2.GaussianBlur(processed_img, (5,5), 0)  
         processed_img = self.roi(processed_img, [self.vertices])
        
-        lines = cv2.HoughLinesP(processed_img, 1, np.pi/180, 180, np.array([]), 320, 5)
+        lines = cv2.HoughLinesP(processed_img, 1, np.pi/180, 180, np.array([]), 220, 5)
+
         if lines is not None:
             lines = [(line[0][0], line[0][1], line[0][2], line[0][3]) for line in lines]
             x1, y1, x2, y2 = self.average_line(lines)
             if not (x1 != x2 and (y2 - y1)/(x2 - x1) > 0):
-                # cv2.line(processed_img, (x1, y1), (x2, y2),[255, 255, 255], 3)
+                processed_img = cv2.line(processed_img, (x1, y1), (x2, y2), [0, 255, 0], 100)
                 lines = []
-        else:
-            pass
 
         return processed_img, bool(lines)
 
