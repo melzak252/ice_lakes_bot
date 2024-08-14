@@ -3,10 +3,10 @@ import time
 import numpy as np
 import cv2
 
-from .img_menager.img_menager import ImgMenager
+from .img_manager.img_manager import ImgManager
 class IceLakesBot:
     def __init__(self, max_time: float = 180, pixels = 50, save_img: bool = False):
-        self.img_menager = ImgMenager()
+        self.img_manager = ImgManager()
 
         self.save_img = save_img
         self.max_time = max_time
@@ -20,7 +20,7 @@ class IceLakesBot:
         self.line_in_last_loop = False
  
     def check_starting_rod_pos(self):
-        _, _, isline = self.img_menager.check_rod()
+        _, _, isline = self.img_manager.check_rod()
 
         if isline:
             return True
@@ -28,7 +28,7 @@ class IceLakesBot:
         while not isline:
             pyautogui.press("f")
             time.sleep(5)
-            _, _, isline = self.img_menager.check_rod()
+            _, _, isline = self.img_manager.check_rod()
         
         return False
 
@@ -49,12 +49,13 @@ class IceLakesBot:
     
     def loop(self, start):
         self.pause = True
+        glitter = False
         t = 0 
         while t < self.max_time:
             if self.pause:
-                processed_img = self.img_menager.get_screen()
+                screen, processed_img, isline = self.img_manager.check_rod()
                                 
-                cv2.imshow("window", processed_img)
+                cv2.imshow("window", screen)
 
                 if cv2.waitKey(25) & 0xFF == ord("q"):
                     cv2.destroyAllWindows()
@@ -67,20 +68,25 @@ class IceLakesBot:
             if round(t) % 30 == 0:
                 pyautogui.press("r")
             
-            _, processed_img, isline = self.img_menager.check_rod()
-        
+            if round(t) % 450 == 0 and not glitter:
+                pyautogui.press("t")
+                glitter = True
             
+            if round(t) % 450:
+                glitter = False 
+            
+            _, processed_img, isline = self.img_manager.check_rod()
+                    
             if not isline and not self.line_in_last_loop:
                 self.got_fish()
                 if self.save_img:
-                    self.img_menager.write_img(processed_img, isfish=True)
+                    self.img_manager.write_img(processed_img, isfish=True)
                 continue
 
             if round(t) % 150 == 0 and isline and self.save_img:
-                self.img_menager.write_img(processed_img, isfish=False)
+                self.img_manager.write_img(processed_img, isfish=False)
         
             cv2.imshow("window", processed_img)
-
             if cv2.waitKey(25) & 0xFF == ord("q"):
                 cv2.destroyAllWindows()
                 break
@@ -92,7 +98,7 @@ class IceLakesBot:
         return self.center_x + np.sin(t)*self.pixels
     
     def move_y(self, t):
-        return self.center_y 
+        return self.center_y + (np.sin(t) ** 2) * self.pixels
     
     def skip(self) -> None:
         self.pause = True
@@ -110,7 +116,7 @@ class IceLakesBot:
         isline = False
         
         while not isline:
-            _, _, isline = self.img_menager.check_rod()  
+            _, _, isline = self.img_manager.check_rod()  
             if isline:
                 if isline_lastloop:
                     break
@@ -123,6 +129,8 @@ class IceLakesBot:
             time.sleep(5)
         
         time.sleep(1)
+        pyautogui.mouseUp(self.center_x, self.center_y)
+        pyautogui.click(self.center_x, self.center_y, duration=0.1)
         pyautogui.mouseDown(self.center_x, self.center_y)
         self.line_in_last_loop = True
         print("Start Fishing Again")
